@@ -1,1 +1,3 @@
-AI Project
+# Connect Four
+
+## Artifical Intelligence Project
