@@ -89,14 +89,19 @@ class BoardGame(object):
         opp_piece = 1
         score = 0
         if window.count(piece) == 4:
-            score += 100
+            score += 10
         elif window.count(piece) == 3 and window.count(0) == 1:
-            score += 5
+            score += 6
         elif window.count(piece) == 2 and window.count(0) == 2:
+            score += 3
+        elif window.count(piece) == 1 and window.count(0) == 3:
             score += 2
 
         if window.count(opp_piece) == 3 and window.count(0) == 1:
-            score -= 4
+            score -= 9
+
+        if window.count(opp_piece) == 2 and window.count(0) == 2:
+            score -= 5
 
         return score
 
