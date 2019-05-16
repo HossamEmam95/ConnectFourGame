@@ -71,6 +71,11 @@ class BoardGame(object):
             for r in range(3, self.height):
                 if self.board[r][c] == self.board[r-1][c-1] == self.board[r-2][c-2] == self.board[r-3][c-3] == piece:
                     return True
+        # check positive sloped location
+        for c in range(self.width - 3):
+            for r in range(3, self.height):
+                if self.board[r][c] == self.board[r - 1][c + 1] == self.board[r - 2][c + 2] == self.board[r - 3][c + 3] == piece:
+                    return True
 
     def window_score(self, window, piece):
         opp_piece = 1
@@ -95,7 +100,6 @@ class BoardGame(object):
             for c in range(self.width-3):
                 window = row_array[c:c+4]
                 score += self.window_score(window, piece)
-        return score
 
         # score vertical
         for c in range(self.width):
