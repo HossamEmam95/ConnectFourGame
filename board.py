@@ -20,7 +20,8 @@ RADIUS = int(SQUARESIZE/2 - 5)
 
 
 class BoardGame(object):
-    def __init__(self, height=6, width=7):
+    def __init__(self, id=0, height=6, width=7):
+        self.id = id
         self.height = height
         self.width = width
         self.board = np.zeros((self.height, self.width))
@@ -31,18 +32,23 @@ class BoardGame(object):
         return
 
     def drop_piece(self, row, col, player, temp_board=None):
-        if temp_board is None:
+        if not temp_board:
             self.board[row][col] = player
             self.last_move["player"] = player
             self.last_move["position"] = (row, col)
         else:
-            temp_board[row][col] = player
+            print("id", temp_board.id)
+            temp_board.board[row][col] = player
         # self.Num_moves += 1
 
     def is_valid_location(self, col):
         return self.board[5][col] == 0
 
-    def get_next_open_row(self, col):
+    def get_next_open_row(self, col, temp=None):
+        if temp:
+            for r in range(temp.height):
+                if temp.board[r][col] == 0:
+                    return r
         for r in range(self.height):
             if self.board[r][col] == 0:
                 return r
@@ -130,19 +136,74 @@ class BoardGame(object):
                 valid_locations.append(col)
         return valid_locations
 
-    def pick_best_move(self, piece):
-        valid_locations = self.get_valid_locations()
-        best_score = 0
-        best_col = random.choice(valid_locations)
-        for col in valid_locations:
-            row = self.get_next_open_row(col)
-            temp_board = self.board.copy()
-            self.drop_piece(row, col, piece, temp_board)
-            score = self.score_position(temp_board, piece)
-            if score > best_score:
-                best_score = score
-                best_col = col
-        return best_col
+    # def pick_best_move(self, piece):
+    #     valid_locations = self.get_valid_locations()
+    #     best_score = 0
+    #     best_col = random.choice(valid_locations)
+    #     for col in valid_locations:
+    #         row = self.get_next_open_row(col)
+    #         temp_board = self.copy()
+    #         self.drop_piece(row, col, piece, temp_board)
+    #         score = self.score_position(temp_board, piece)
+    #         if score > best_score:
+    #             best_score = score
+    #             best_col = col
+    #     return best_col
+
+    def copy_board(self):
+        b = BoardGame()
+        b.board = self.board
+        b.id = self.id + 1
+        return b
+
+    def minimax(self, board, depth, alpha, beta, maximizingPlayer):
+        print(board.board, '\n')
+        print(self.board)
+        valid_locations = board.get_valid_locations()
+        if depth == 0 or board.game_over:
+            print("here")
+            if board.game_over:
+                if board.winning_drop(2):
+                    return None, 100000000000000
+                elif board.winning_drop(1):
+                    return None, -10000000000000
+                else:  # Game is over, no more valid moves
+                    return None, 0
+            else:  # Depth is zero
+                return None, 5
+        if maximizingPlayer:
+            print("hereeee")
+            value = -math.inf
+            column = random.choice(valid_locations)
+            for col in valid_locations:
+                row = board.get_next_open_row(col)
+                b_copy = board.copy_board()
+                board.drop_piece(row, col, 2, b_copy)
+                new_score = board.minimax(b_copy, depth - 1, alpha, beta, False)[1]
+                if new_score > value:
+                    value = new_score
+                    column = col
+                alpha = max(alpha, value)
+                if alpha >= beta:
+                    break
+            return column, value
+
+        else:  # Minimizing player
+            print("min")
+            value = math.inf
+            column = random.choice(valid_locations)
+            for col in valid_locations:
+                row = board.get_next_open_row(col)
+                b_copy = board.copy_board()
+                board.drop_piece(row, col, 1, b_copy)
+                new_score = board.minimax(b_copy, depth - 1, alpha, beta, True)[1]
+                if new_score < value:
+                    value = new_score
+                    column = col
+                beta = min(beta, value)
+                if alpha >= beta:
+                    break
+            return column, value
 
     def play(self):
         while not self.game_over:
@@ -160,7 +221,6 @@ class BoardGame(object):
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
 
-                    print(np.flip(self.board, 0))
                     # player 1 move
                     if self.turn == 0:
                         posx = event.pos[0]
@@ -177,7 +237,9 @@ class BoardGame(object):
                             draw_board(self.board)
             # AI move
             if self.turn == 1 and not self.game_over:
-                col = self.pick_best_move(2)
+                print("ai move")
+                # col = self.pick_best_move(2)
+                col, score = self.minimax(self.copy_board(), 1, math.inf, -math.inf, True)
                 if self.is_valid_location(col):
                     row = self.get_next_open_row(col)
                     self.drop_piece(row, col, 2)
@@ -188,6 +250,8 @@ class BoardGame(object):
 
                     self.turn = 0
                     draw_board(self.board)
+                else:
+                    print("not valid col")
 
             if self.game_over:
                 pygame.time.wait(3000)
