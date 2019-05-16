@@ -163,7 +163,9 @@ class BoardGame(object):
         b.id = self.id + 1
         return b
 
-
+    def rand_move(self):
+        valid_locations = self.get_valid_locations()
+        return random.choice(valid_locations)
 
     def valid_moves(self):
         moves = []
@@ -246,6 +248,8 @@ def minimax(board, depth, alpha, beta, maximizingPlayer):
     return column, value
 
 
+
+
 def play(board):
     while not board.game_over:
         for event in pygame.event.get():
@@ -281,8 +285,12 @@ def play(board):
             print("ai move")
             # col = self.pick_best_move(2)
             b = board.copy_board()
-            col, score = minimax(b, 2, -math.inf, math.inf, True)
-            print("col:", col, "  score", score)
+            depth = 2
+            if depth == 0:
+                col = board.rand_move()
+            else:
+                col, score = minimax(b, depth, -math.inf, math.inf, True)
+                print("col:", col, "  score", score)
             if board.is_valid_location(col):
                 row = board.get_next_open_row(col)
                 board.drop_piece(row, col, 2)
